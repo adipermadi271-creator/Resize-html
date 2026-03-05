@@ -27,22 +27,16 @@ jobs:
           # 1. Tambahkan platform
           cordova platform add android@12.0.0
           
-          # 2. OPERASI BEDAH: Perbaiki file cordova.gradle yang bikin error XmlParser
-          # Kita ganti XmlParser menjadi XmlSlurper agar kompatibel dengan Gradle 9
-          sed -i 's/new XmlParser(false, false).parseText(xml)/new XmlSlurper().parseText(xml)/g' platforms/android/CordovaLib/cordova.gradle
+          # 2. OPERASI BEDAH: Kita perbaiki XmlParser yang bikin error kemarin
+          # Perintah ini akan mencari di seluruh folder platforms
+          find platforms/android -name "cordova.gradle" -exec sed -i 's/new XmlParser(false, false)/new XmlSlurper()/g' {} +
           
-          # 3. Sinkronisasi folder
-          cordova prepare android
-          
-          # 4. Beri izin eksekusi gradlew
-          chmod +x platforms/android/gradlew
-          
-          # 5. Jalankan build menggunakan Java 17
+          # 3. JALANKAN BUILD LANGSUNG
+          # Kita gunakan 'cordova build' karena dia otomatis memberi izin ke gradlew internalnya
           export JAVA_HOME=$JAVA_HOME_17_X64
-          cd platforms/android && ./gradlew assembleDebug
+          cordova build android --debug --device --no-telemetry
           
-          # 6. Ambil hasil APK
-          cd ../..
+          # 4. Ambil hasil APK (pencarian fleksibel)
           mkdir -p output
           find platforms/android/app/build/outputs/apk/debug/ -name "*.apk" -exec cp {} output/resizer-android13.apk \;
 
