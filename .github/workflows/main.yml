@@ -12,7 +12,7 @@ jobs:
         uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
-          java-version: '11' # Kembali ke 11 karena Gradle 7 lebih cocok dengan Java 11
+          java-version: '11'
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -24,33 +24,27 @@ jobs:
 
       - name: Build Android APK
         run: |
-          # 1. Buat proyek bersih
-          cordova create my_app com.belajarkode.resizer ResizerApp
-          
-          # 2. Copy file kamu
-          cp -r www/* my_app/www/
-          cp config.xml my_app/config.xml
-          
-          cd my_app
-          # 3. Tambah platform
+          # 1. Tambahkan platform langsung di root (folder utama)
           cordova platform add android@12.0.0
           
-          # 4. FIX UTAMA: Paksa gunakan Gradle 7.6 agar tidak error XmlParser
-          # Kita buat file gradle-wrapper.properties secara manual
+          # 2. Paksa pembuatan Gradle Wrapper versi 7.6 agar tidak error XmlParser
           mkdir -p platforms/android/gradle/wrapper
           echo "distributionBase=GRADLE_USER_HOME" > platforms/android/gradle/wrapper/gradle-wrapper.properties
           echo "distributionPath=wrapper/dists" >> platforms/android/gradle/wrapper/gradle-wrapper.properties
           echo "distributionUrl=https\://services.gradle.org/distributions/gradle-7.6-bin.zip" >> platforms/android/gradle/wrapper/gradle-wrapper.properties
           echo "zipStoreBase=GRADLE_USER_HOME" >> platforms/android/gradle/wrapper/gradle-wrapper.properties
           echo "zipStorePath=wrapper/dists" >> platforms/android/gradle/wrapper/gradle-wrapper.properties
-
-          # 5. Jalankan build
+          
+          # 3. Beri izin eksekusi
+          chmod +x platforms/android/gradlew
+          
+          # 4. Jalankan build
           export JAVA_HOME=$JAVA_HOME_11_X64
           cordova build android --debug --device
           
-          # 6. Pindahkan hasil
-          mkdir -p ../output
-          cp platforms/android/app/build/outputs/apk/debug/app-debug.apk ../output/resizer-android13.apk
+          # 5. Ambil hasil APK
+          mkdir -p output
+          cp platforms/android/app/build/outputs/apk/debug/app-debug.apk output/resizer-android13.apk
 
       - name: Upload APK Result
         uses: actions/upload-artifact@v4
