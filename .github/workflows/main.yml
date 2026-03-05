@@ -8,16 +8,16 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      - name: Setup Java (JDK 11)
+      - name: Setup Java (JDK 17)
         uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
-          java-version: '11'
+          java-version: '17'
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '18'
+          node-version: '20'
 
       - name: Install Cordova
         run: npm install -g cordova
@@ -27,29 +27,23 @@ jobs:
           # 1. Tambahkan platform
           cordova platform add android@12.0.0
           
-          # 2. Paksa sinkronisasi folder (Kunci agar gradlew muncul)
+          # 2. Sinkronisasi folder
           cordova prepare android
-          sleep 5
           
-          # 3. Cari file gradlew secara paksa dan beri izin eksekusi
-          # Perintah ini akan mencari file gradlew di folder mana pun dan melakukan chmod
-          find platforms/android/ -name "gradlew" -exec chmod +x {} +
+          # 3. Paksa pembuatan file gradlew jika belum ada
+          # Kita panggil gradle wrapper bawaan sistem untuk membuatkan file-nya
+          gradle wrapper --gradle-version 8.2 --project-dir platforms/android
           
-          # 4. Buat manual Gradle Wrapper 7.6 (Mencegah error XmlParser nanti)
-          mkdir -p platforms/android/gradle/wrapper
-          cat <<EOF > platforms/android/gradle/wrapper/gradle-wrapper.properties
-          distributionBase=GRADLE_USER_HOME
-          distributionPath=wrapper/dists
-          distributionUrl=https\://services.gradle.org/distributions/gradle-7.6-bin.zip
-          zipStoreBase=GRADLE_USER_HOME
-          zipStorePath=wrapper/dists
-          EOF
+          # 4. Beri izin eksekusi secara menyeluruh
+          chmod +x platforms/android/gradlew
           
-          # 5. Jalankan build menggunakan Java 11
-          export JAVA_HOME=$JAVA_HOME_11_X64
-          cordova build android --debug --device --no-telemetry
+          # 5. Jalankan build menggunakan Java 17
+          export JAVA_HOME=$JAVA_HOME_17_X64
+          # Kita panggil gradlew secara langsung agar lebih stabil
+          cd platforms/android && ./gradlew assembleDebug
           
           # 6. Ambil hasil APK
+          cd ../..
           mkdir -p output
           find platforms/android/app/build/outputs/apk/debug/ -name "*.apk" -exec cp {} output/resizer-android13.apk \;
 
