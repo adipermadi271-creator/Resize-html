@@ -12,7 +12,7 @@ jobs:
         uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
-          java-version: '17' # Kita pakai 17 agar sdkmanager tidak error lagi
+          java-version: '17'
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -24,26 +24,37 @@ jobs:
 
       - name: Build Android APK
         run: |
-          # 1. Tambahkan platform
+          # 1. HAPUS GRADLE BAWAAN GITHUB agar tidak bisa dipanggil sama sekali
+          sudo rm -rf /usr/share/gradle*
+          sudo rm -f /usr/bin/gradle
+          
+          # 2. Tambahkan platform
           cordova platform add android@12.0.0
           
-          # 2. Install Build Tools 33.0.2 menggunakan Java 17 (Pasti Berhasil)
+          # 3. FIX XMLPARSER: Ubah XmlParser jadi XmlSlurper di semua file cordova.gradle
+          # Ini adalah cadangan jika Gradle versi tinggi masih mencoba berjalan
+          find platforms/android -name "cordova.gradle" -exec sed -i 's/new XmlParser(false, false)/new XmlSlurper()/g' {} +
+          
+          # 4. DOWNLOAD GRADLE 7.6 MANUAL
+          wget https://services.gradle.org/distributions/gradle-7.6-bin.zip -P /tmp
+          sudo unzip -d /opt/gradle /tmp/gradle-7.6-bin.zip
+          export PATH=/opt/gradle/gradle-7.6/bin:$PATH
+          
+          # 5. Pasang Build Tools yang diperlukan
           echo "y" | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --install "build-tools;33.0.2" "platforms;android-33"
           
-          # 3. Kunci Gradle 7.6 (Agar terhindar dari error XmlParser)
-          export CORDOVA_ANDROID_GRADLE_DISTRIBUTION_URL="https://services.gradle.org/distributions/gradle-7.6-bin.zip"
-          
-          # 4. Jalankan build
-          # Kita pakai Java 17, tapi Gradle 7.6 masih sanggup menanganinya
+          # 6. Jalankan build menggunakan Java 17
           export JAVA_HOME=$JAVA_HOME_17_X64
-          cordova build android --debug --device --no-telemetry -- --gradleArg=-Pandroid.useAndroidX=true
+          # Gunakan perintah gradle langsung dari bin yang kita download
+          cd platforms/android && /opt/gradle/gradle-7.6/bin/gradle assembleDebug
           
-          # 5. Ambil hasil APK
+          # 7. Ambil hasil APK
+          cd ../..
           mkdir -p output
           find platforms/android/app/build/outputs/apk/debug/ -name "*.apk" -exec cp {} output/resizer-android13.apk \;
 
       - name: Upload APK Result
-        uses: actions/upload-artifact@v4
+        uses: upload-artifact@v4
         with:
           name: Aplikasi-Resizer-Android13
           path: output/resizer-android13.apk
