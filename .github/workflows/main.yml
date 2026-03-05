@@ -24,15 +24,18 @@ jobs:
 
       - name: Build Android APK
         run: |
-          # 1. Hapus Gradle bawaan GitHub dari PATH agar tidak bentrok
-          sudo rm -rf /usr/share/gradle*
-          sudo rm -f /usr/bin/gradle
-          
-          # 2. Tambahkan platform
+          # 1. Tambahkan platform
           cordova platform add android@12.0.0
           
-          # 3. Buat Gradle Wrapper 7.6 secara paksa
-          # Kita gunakan perintah 'gradle' dari wrapper, bukan dari sistem
+          # 2. Paksa sinkronisasi folder (Kunci agar gradlew muncul)
+          cordova prepare android
+          sleep 5
+          
+          # 3. Cari file gradlew secara paksa dan beri izin eksekusi
+          # Perintah ini akan mencari file gradlew di folder mana pun dan melakukan chmod
+          find platforms/android/ -name "gradlew" -exec chmod +x {} +
+          
+          # 4. Buat manual Gradle Wrapper 7.6 (Mencegah error XmlParser nanti)
           mkdir -p platforms/android/gradle/wrapper
           cat <<EOF > platforms/android/gradle/wrapper/gradle-wrapper.properties
           distributionBase=GRADLE_USER_HOME
@@ -42,19 +45,11 @@ jobs:
           zipStorePath=wrapper/dists
           EOF
           
-          # 4. Ambil file gradlew dari template Cordova jika belum ada
-          cordova prepare android
-          
-          # 5. Beri izin eksekusi pada gradlew
-          chmod +x platforms/android/gradlew
-          
-          # 6. Jalankan build menggunakan gradlew (BUKAN perintah cordova build)
-          # Ini memastikan kita pakai Gradle 7.6 yang kita download tadi
+          # 5. Jalankan build menggunakan Java 11
           export JAVA_HOME=$JAVA_HOME_11_X64
-          cd platforms/android && ./gradlew assembleDebug
+          cordova build android --debug --device --no-telemetry
           
-          # 7. Ambil hasil APK
-          cd ../..
+          # 6. Ambil hasil APK
           mkdir -p output
           find platforms/android/app/build/outputs/apk/debug/ -name "*.apk" -exec cp {} output/resizer-android13.apk \;
 
