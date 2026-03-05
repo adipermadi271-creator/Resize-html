@@ -24,24 +24,35 @@ jobs:
 
       - name: Build Android APK
         run: |
-          # 1. Inisialisasi Cordova langsung di folder utama
-          # Kita gunakan --copy-from karena folder www sudah ada
-          cordova telemetry off
-          cordova platform add android@12.0.0
+          # 1. Buat folder sementara untuk memancing file proyek keluar
+          cordova create temp_app com.belajarkode.resizer ResizerApp
           
-          # 2. Jalankan prepare untuk membuat file gradlew
+          # 2. Masuk ke folder sementara
+          cd temp_app
+          
+          # 3. Salin file asli kamu (www dan config) dari folder root ke sini
+          cp -r ../www/* www/
+          cp ../config.xml config.xml
+          
+          # 4. Tambah platform & prepare (Ini yang menciptakan gradlew)
+          cordova platform add android@12.0.0
           cordova prepare android
           
-          # 3. Beri izin eksekusi pada gradlew (pasti ketemu karena di root)
-          chmod +x platforms/android/gradlew
-          
-          # 4. Jalankan build menggunakan Java 17
-          export JAVA_HOME=$JAVA_HOME_17_X64
-          ./platforms/android/gradlew assembleDebug -p platforms/android
-          
-          # 5. Pindahkan hasil ke folder output
-          mkdir -p output
-          cp platforms/android/app/build/outputs/apk/debug/app-debug.apk output/resizer-android13.apk
+          # 5. Pastikan file gradlew ada sebelum di-chmod
+          if [ -f "platforms/android/gradlew" ]; then
+            chmod +x platforms/android/gradlew
+            
+            # 6. Jalankan build menggunakan Java 17
+            export JAVA_HOME=$JAVA_HOME_17_X64
+            ./platforms/android/gradlew assembleDebug -p platforms/android
+            
+            # 7. Kirim hasilnya ke folder output di luar
+            mkdir -p ../output
+            cp platforms/android/app/build/outputs/apk/debug/app-debug.apk ../output/resizer-android13.apk
+          else
+            echo "Error: gradlew tidak ditemukan!"
+            exit 1
+          fi
 
       - name: Upload APK Result
         uses: actions/upload-artifact@v4
