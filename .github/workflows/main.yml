@@ -37,17 +37,20 @@ jobs:
           # 3. Tambahkan platform Android 12
           cordova platform add android@12.0.0
           
-          # 4. PERBAIKAN KRUSIAL: Beri izin eksekusi pada Gradlew
-          if [ -f "platforms/android/gradlew" ]; then
-            chmod +x platforms/android/gradlew
-          fi
-
-          # 5. Jalankan build dengan paksa menggunakan Java 11
-          JAVA_HOME=$JAVA_HOME_11_X64 ./platforms/android/gradlew assembleDebug -p platforms/android
+          # 4. PERBAIKAN: Jalankan 'prepare' agar gradlew diciptakan oleh Cordova
+          cordova prepare android
           
-          # 6. Pindahkan hasil APK
+          # 5. Beri izin eksekusi pada Gradlew (lokasinya kita perkuat)
+          chmod +x platforms/android/gradlew
+
+          # 6. Jalankan build menggunakan perintah Cordova asli (lebih stabil untuk Android 12)
+          # Kita gunakan 'export' agar Java 11 terbaca oleh Cordova
+          export JAVA_HOME=$JAVA_HOME_11_X64
+          cordova build android --debug --device
+          
+          # 7. Pindahkan hasil APK
           mkdir -p ../output
-          find platforms/android/app/build/outputs/apk/debug/ -name "*.apk" -exec cp {} ../output/resizer-android13.apk \;
+          cp platforms/android/app/build/outputs/apk/debug/app-debug.apk ../output/resizer-android13.apk
 
       - name: Upload APK Result
         uses: actions/upload-artifact@v4
