@@ -17,42 +17,29 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '18'
+          node-version: '20' # Kita gunakan Node terbaru yang lebih stabil
 
       - name: Install Cordova
         run: npm install -g cordova
 
       - name: Build Android APK
         run: |
-          # 1. Buat folder sementara untuk memancing file proyek keluar
-          cordova create temp_app com.belajarkode.resizer ResizerApp
+          # 1. Buat proyek baru di folder 'build_app'
+          cordova create build_app com.belajarkode.resizer ResizerApp
           
-          # 2. Masuk ke folder sementara
-          cd temp_app
+          # 2. Pindahkan file kamu ke dalam folder tersebut
+          cp -r www/* build_app/www/
+          cp config.xml build_app/config.xml
           
-          # 3. Salin file asli kamu (www dan config) dari folder root ke sini
-          cp -r ../www/* www/
-          cp ../config.xml config.xml
+          # 3. Masuk dan Bangun (Gunakan satu baris perintah agar folder tetap sinkron)
+          cd build_app && \
+          cordova platform add android@12.0.0 --verbose && \
+          export JAVA_HOME=$JAVA_HOME_17_X64 && \
+          cordova build android --debug --device --verbose
           
-          # 4. Tambah platform & prepare (Ini yang menciptakan gradlew)
-          cordova platform add android@12.0.0
-          cordova prepare android
-          
-          # 5. Pastikan file gradlew ada sebelum di-chmod
-          if [ -f "platforms/android/gradlew" ]; then
-            chmod +x platforms/android/gradlew
-            
-            # 6. Jalankan build menggunakan Java 17
-            export JAVA_HOME=$JAVA_HOME_17_X64
-            ./platforms/android/gradlew assembleDebug -p platforms/android
-            
-            # 7. Kirim hasilnya ke folder output di luar
-            mkdir -p ../output
-            cp platforms/android/app/build/outputs/apk/debug/app-debug.apk ../output/resizer-android13.apk
-          else
-            echo "Error: gradlew tidak ditemukan!"
-            exit 1
-          fi
+          # 4. Ambil hasilnya
+          mkdir -p ../output
+          cp build_app/platforms/android/app/build/outputs/apk/debug/app-debug.apk ../output/resizer-android13.apk
 
       - name: Upload APK Result
         uses: actions/upload-artifact@v4
