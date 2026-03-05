@@ -12,7 +12,7 @@ jobs:
         uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
-          java-version: '17' # Diubah ke 17 agar Gradle tidak protes
+          java-version: '17'
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -24,23 +24,24 @@ jobs:
 
       - name: Build Android APK
         run: |
-          # 1. Buat proyek
-          cordova create my_app com.belajarkode.resizer ResizerApp
+          # 1. Inisialisasi Cordova langsung di folder utama
+          # Kita gunakan --copy-from karena folder www sudah ada
+          cordova telemetry off
+          cordova platform add android@12.0.0
           
-          # 2. Salin file kamu
-          cp -r www/* my_app/www/
-          cp config.xml my_app/config.xml
+          # 2. Jalankan prepare untuk membuat file gradlew
+          cordova prepare android
           
-          # 3. Jalankan rangkaian perintah dalam satu blok folder my_app
-          cd my_app && \
-          cordova platform add android@12.0.0 && \
-          cordova prepare android && \
-          chmod +x platforms/android/gradlew && \
-          export JAVA_HOME=$JAVA_HOME_17_X64 && \
-          ./platforms/android/gradlew assembleDebug -p platforms/android && \
-          cd .. && \
-          mkdir -p output && \
-          cp my_app/platforms/android/app/build/outputs/apk/debug/app-debug.apk output/resizer-android13.apk
+          # 3. Beri izin eksekusi pada gradlew (pasti ketemu karena di root)
+          chmod +x platforms/android/gradlew
+          
+          # 4. Jalankan build menggunakan Java 17
+          export JAVA_HOME=$JAVA_HOME_17_X64
+          ./platforms/android/gradlew assembleDebug -p platforms/android
+          
+          # 5. Pindahkan hasil ke folder output
+          mkdir -p output
+          cp platforms/android/app/build/outputs/apk/debug/app-debug.apk output/resizer-android13.apk
 
       - name: Upload APK Result
         uses: actions/upload-artifact@v4
