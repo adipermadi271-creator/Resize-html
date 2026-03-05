@@ -14,12 +14,6 @@ jobs:
           distribution: 'temurin'
           java-version: '11'
 
-      # Langkah ini sangat penting untuk memaksa versi Gradle yang kompatibel
-      - name: Setup Gradle
-        uses: gradle/gradle-build-action@v3
-        with:
-          gradle-version: 7.6
-
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
@@ -30,26 +24,30 @@ jobs:
 
       - name: Build Android APK
         run: |
-          # 1. Buat folder proyek baru agar bersih
+          # 1. Buat folder proyek bersih
           cordova create my_app com.belajarkode.resizer ResizerApp
           
-          # 2. Masukkan file HTML dan Config kamu
+          # 2. Copy file pendukung
           rm -rf my_app/www/*
           cp -r www/* my_app/www/
           cp config.xml my_app/config.xml
           
           cd my_app
           
-          # 3. Tambahkan platform Android 12 (untuk mendukung HP Android 13 kamu)
+          # 3. Tambahkan platform Android 12
           cordova platform add android@12.0.0
           
-          # 4. Jalankan build dengan memaksa penggunaan JDK 11
-          export JAVA_HOME=$JAVA_HOME_11_X64
-          cordova build android --debug --device
+          # 4. PERBAIKAN KRUSIAL: Beri izin eksekusi pada Gradlew
+          if [ -f "platforms/android/gradlew" ]; then
+            chmod +x platforms/android/gradlew
+          fi
+
+          # 5. Jalankan build dengan paksa menggunakan Java 11
+          JAVA_HOME=$JAVA_HOME_11_X64 ./platforms/android/gradlew assembleDebug -p platforms/android
           
-          # 5. Siapkan output
+          # 6. Pindahkan hasil APK
           mkdir -p ../output
-          cp platforms/android/app/build/outputs/apk/debug/app-debug.apk ../output/resizer-android13.apk
+          find platforms/android/app/build/outputs/apk/debug/ -name "*.apk" -exec cp {} ../output/resizer-android13.apk \;
 
       - name: Upload APK Result
         uses: actions/upload-artifact@v4
