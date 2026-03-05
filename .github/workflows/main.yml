@@ -24,15 +24,14 @@ jobs:
 
       - name: Build Android APK
         run: |
-          # 1. HAPUS GRADLE BAWAAN GITHUB agar tidak bisa dipanggil sama sekali
+          # 1. HAPUS GRADLE BAWAAN GITHUB agar tidak bentrok
           sudo rm -rf /usr/share/gradle*
           sudo rm -f /usr/bin/gradle
           
           # 2. Tambahkan platform
           cordova platform add android@12.0.0
           
-          # 3. FIX XMLPARSER: Ubah XmlParser jadi XmlSlurper di semua file cordova.gradle
-          # Ini adalah cadangan jika Gradle versi tinggi masih mencoba berjalan
+          # 3. FIX XMLPARSER: Ubah XmlParser jadi XmlSlurper
           find platforms/android -name "cordova.gradle" -exec sed -i 's/new XmlParser(false, false)/new XmlSlurper()/g' {} +
           
           # 4. DOWNLOAD GRADLE 7.6 MANUAL
@@ -43,18 +42,17 @@ jobs:
           # 5. Pasang Build Tools yang diperlukan
           echo "y" | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --install "build-tools;33.0.2" "platforms;android-33"
           
-          # 6. Jalankan build menggunakan Java 17
+          # 6. Jalankan build menggunakan Java 17 dan Gradle 7.6 yang kita download
           export JAVA_HOME=$JAVA_HOME_17_X64
-          # Gunakan perintah gradle langsung dari bin yang kita download
           cd platforms/android && /opt/gradle/gradle-7.6/bin/gradle assembleDebug
           
-          # 7. Ambil hasil APK
+          # 7. Siapkan folder output
           cd ../..
           mkdir -p output
           find platforms/android/app/build/outputs/apk/debug/ -name "*.apk" -exec cp {} output/resizer-android13.apk \;
 
       - name: Upload APK Result
-        uses: upload-artifact@v4
+        uses: actions/upload-artifact@v4
         with:
           name: Aplikasi-Resizer-Android13
           path: output/resizer-android13.apk
