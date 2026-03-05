@@ -14,6 +14,12 @@ jobs:
           distribution: 'temurin'
           java-version: '11'
 
+      # Langkah ini sangat penting untuk memaksa versi Gradle yang kompatibel
+      - name: Setup Gradle
+        uses: gradle/gradle-build-action@v3
+        with:
+          gradle-version: 7.6
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
@@ -22,26 +28,26 @@ jobs:
       - name: Install Cordova
         run: npm install -g cordova
 
-      - name: Prepare and Build Cordova
+      - name: Build Android APK
         run: |
-          # 1. Buat proyek
-          cordova create my_app com.kamu.resizer ResizerApp
+          # 1. Buat folder proyek baru agar bersih
+          cordova create my_app com.belajarkode.resizer ResizerApp
           
-          # 2. Sinkronkan file kamu
+          # 2. Masukkan file HTML dan Config kamu
           rm -rf my_app/www/*
           cp -r www/* my_app/www/
           cp config.xml my_app/config.xml
           
           cd my_app
-          # 3. GUNAKAN VERSI INI UNTUK ANDROID 13
+          
+          # 3. Tambahkan platform Android 12 (untuk mendukung HP Android 13 kamu)
           cordova platform add android@12.0.0
           
-          # 4. Tambahkan izin akses media agar bisa buka galeri di Android 13
-          cordova plugin add cordova-plugin-chooser
-          
-          # 5. Jalankan Build
+          # 4. Jalankan build dengan memaksa penggunaan JDK 11
+          export JAVA_HOME=$JAVA_HOME_11_X64
           cordova build android --debug --device
           
+          # 5. Siapkan output
           mkdir -p ../output
           cp platforms/android/app/build/outputs/apk/debug/app-debug.apk ../output/resizer-android13.apk
 
