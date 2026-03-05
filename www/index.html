@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self' data: gap: https://ssl.gstatic.com 'unsafe-eval'; style-src 'self' 'unsafe-inline'; media-src *; img-src 'self' data: content:;">
+    <title>Resizer Foto Pro</title>
+    <style>
+        body { font-family: sans-serif; background: #f0f2f5; display: flex; justify-content: center; padding: 20px; }
+        .card { background: white; padding: 20px; border-radius: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); width: 100%; max-width: 400px; }
+        h2 { text-align: center; color: #1a73e8; margin-bottom: 5px; }
+        p.subtitle { text-align: center; font-size: 0.8em; color: #888; margin-bottom: 20px; }
+        input, button { width: 100%; margin: 10px 0; padding: 12px; border-radius: 8px; border: 1px solid #ccc; box-sizing: border-box; }
+        button { background: #1a73e8; color: white; border: none; font-weight: bold; cursor: pointer; transition: 0.3s; }
+        button:hover { background: #1557b0; }
+        #preview { width: 100%; margin-top: 15px; border-radius: 8px; display: none; border: 2px dashed #1a73e8; }
+        .status { font-size: 0.9em; color: #555; text-align: center; font-weight: bold; }
+        .instruction { font-size: 0.8em; color: #d93025; text-align: center; display: none; margin-top: 10px; }
+    </style>
+</head>
+<body>
+
+<div class="card">
+    <h2>Resizer Foto</h2>
+    <p class="subtitle">Versi Aplikasi Android</p>
+    
+    <p class="status">Pilih foto dari galeri:</p>
+    <input type="file" id="upload" accept="image/*">
+    
+    <input type="number" id="width" placeholder="Lebar Baru (px)">
+    <input type="number" id="height" placeholder="Tinggi Baru (px)">
+    
+    <button onclick="resizeImage()">PROSES RESIZE</button>
+    
+    <canvas id="canvas" style="display:none;"></canvas>
+    
+    <p id="msg-instruction" class="instruction">
+        Pengecilan berhasil! <br> <b>Tekan lama pada gambar di bawah</b> lalu pilih "Simpan Gambar" untuk mengunduh ke galeri.
+    </p>
+    
+    <img id="preview" alt="Preview Hasil">
+</div>
+
+<script src="cordova.js"></script>
+
+<script>
+    function resizeImage() {
+        const fileInput = document.getElementById('upload');
+        const file = fileInput.files[0];
+        const newWidth = document.getElementById('width').value;
+        const newHeight = document.getElementById('height').value;
+        
+        if (!file || !newWidth || !newHeight) {
+            alert("Mohon pilih foto dan isi ukuran!");
+            return;
+        }
+
+        const reader = new FileReader();
+        reader.onload = function(event) {
+            const img = new Image();
+            img.onload = function() {
+                const canvas = document.getElementById('canvas');
+                const ctx = canvas.getContext('2d');
+                
+                canvas.width = newWidth;
+                canvas.height = newHeight;
+                
+                // Proses Resize menggunakan Canvas
+                ctx.drawImage(img, 0, 0, newWidth, newHeight);
+                
+                // Konversi ke DataURL (JPEG)
+                const dataUrl = canvas.toDataURL('image/jpeg', 0.9);
+                
+                // Tampilkan Preview
+                const preview = document.getElementById('preview');
+                preview.src = dataUrl;
+                preview.style.display = 'block';
+                
+                // Tampilkan instruksi simpan manual (lebih aman untuk Android WebView)
+                document.getElementById('msg-instruction').style.display = 'block';
+                
+                // Coba trigger download otomatis (mungkin tidak jalan di semua versi Android)
+                const link = document.createElement('a');
+                link.download = 'hasil_resize_' + Date.now() + '.jpg';
+                link.href = dataUrl;
+                link.click();
+            }
+            img.src = event.target.result;
+        }
+        reader.readAsDataURL(file);
+    }
+</script>
+
+</body>
+</html>
