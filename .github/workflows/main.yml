@@ -12,7 +12,7 @@ jobs:
         uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
-          java-version: '11' # Kembali ke 11 karena paling cocok dengan Gradle 7
+          java-version: '11'
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -27,17 +27,17 @@ jobs:
           # 1. Tambahkan platform
           cordova platform add android@12.0.0
           
-          # 2. Paksa download Gradle 7.6 secara manual ke folder proyek
-          wget https://services.gradle.org/distributions/gradle-7.6-bin.zip -P /tmp
-          sudo unzip -d /opt/gradle /tmp/gradle-7.6-bin.zip
-          export PATH=/opt/gradle/gradle-7.6/bin:$PATH
+          # 2. Pastikan Android SDK Build-Tools 33.0.2 tersedia
+          # Kita gunakan sdkmanager bawaan GitHub
+          echo "y" | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --install "build-tools;33.0.2" "platforms;android-33"
           
-          # 3. Kunci agar Cordova pakai Gradle yang baru kita download (BUKAN punya GitHub)
+          # 3. Kunci Gradle 7.6 (Ini yang membuat XmlParser hilang tadi, harus tetap ada)
           export CORDOVA_ANDROID_GRADLE_DISTRIBUTION_URL="https://services.gradle.org/distributions/gradle-7.6-bin.zip"
           
-          # 4. Jalankan build dengan perintah khusus agar tidak pakai 'wrapper' GitHub
+          # 4. Jalankan build
           export JAVA_HOME=$JAVA_HOME_11_X64
-          cordova build android --debug --device --verbose --no-telemetry -- --gradleArg=-Pandroid.useAndroidX=true
+          # Kita tambahkan flag agar Cordova tahu lokasi Android Home
+          cordova build android --debug --device --no-telemetry -- --gradleArg=-Pandroid.useAndroidX=true
           
           # 5. Ambil hasil APK
           mkdir -p output
