@@ -1,11 +1,25 @@
 <?xml version='1.0' encoding='utf-8'?>
-<widget id="com.belajarkode.resizer" version="1.0.0" xmlns="http://www.w3.org/ns/widgets">
+<widget id="com.belajarkode.resizer" version="1.0.0" xmlns="http://www.w3.org/ns/widgets" xmlns:android="http://schemas.android.com/apk/res/android">
     <name>Resizer Pro HTML</name>
-    <description>Aplikasi Resize Foto Ringan</description>
+    <description>Aplikasi Resize Foto Ringan untuk Android 13</description>
     <author email="dev@kamu.com">Pelajar Kode</author>
+    
     <content src="index.html" />
     <access origin="*" />
     <allow-intent href="http://*/*" />
     <allow-intent href="https://*/*" />
-    <preference name="Orientation" value="portrait" />
+
+    <platform name="android">
+        <preference name="AndroidXEnabled" value="true" />
+        
+        <preference name="android-minSdkVersion" value="24" />
+        <preference name="android-targetSdkVersion" value="33" />
+        
+        <preference name="Orientation" value="portrait" />
+
+        <config-file target="AndroidManifest.xml" parent="/*">
+            <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
+            <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" android:maxSdkVersion="32" />
+        </config-file>
+    </platform>
 </widget>
