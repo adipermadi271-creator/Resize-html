@@ -24,31 +24,31 @@ jobs:
 
       - name: Build Android APK
         run: |
-          # 1. Buat folder proyek bersih
+          # 1. Buat folder proyek
           cordova create my_app com.belajarkode.resizer ResizerApp
           
-          # 2. Copy file pendukung
+          # 2. Masukkan file kamu ke dalam folder proyek
           rm -rf my_app/www/*
           cp -r www/* my_app/www/
           cp config.xml my_app/config.xml
           
+          # 3. Masuk ke folder proyek untuk semua perintah selanjutnya
           cd my_app
           
-          # 3. Tambahkan platform Android 12
+          # 4. Tambah platform (ini akan mengunduh template Android)
           cordova platform add android@12.0.0
           
-          # 4. PERBAIKAN: Jalankan 'prepare' agar gradlew diciptakan oleh Cordova
+          # 5. Jalankan prepare untuk membuat file gradlew
           cordova prepare android
           
-          # 5. Beri izin eksekusi pada Gradlew (lokasinya kita perkuat)
+          # 6. Beri izin eksekusi (jalur sekarang sudah benar)
           chmod +x platforms/android/gradlew
 
-          # 6. Jalankan build menggunakan perintah Cordova asli (lebih stabil untuk Android 12)
-          # Kita gunakan 'export' agar Java 11 terbaca oleh Cordova
+          # 7. Jalankan build
           export JAVA_HOME=$JAVA_HOME_11_X64
           cordova build android --debug --device
           
-          # 7. Pindahkan hasil APK
+          # 8. Pindahkan hasil ke folder output di luar my_app
           mkdir -p ../output
           cp platforms/android/app/build/outputs/apk/debug/app-debug.apk ../output/resizer-android13.apk
 
