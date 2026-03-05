@@ -8,27 +8,27 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      - name: Setup Java (JDK 11)
+      - name: Setup Java (JDK 17)
         uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
-          java-version: '11'
+          java-version: '17' # Upgrade ke 17 sesuai permintaan Gradle
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '18'
+          node-version: '20'
 
       - name: Install Cordova
         run: npm install -g cordova
 
       - name: Build Android APK
         run: |
-          # 1. Bersihkan lingkungan dan tambahkan platform
+          # 1. Tambahkan platform
           cordova platform add android@12.0.0
           
-          # 2. Paksa pembuatan Gradle Wrapper 7.6 agar tidak error XmlParser
-          # Kita buat foldernya dulu agar sistem tidak bingung
+          # 2. Paksa pembuatan Gradle Wrapper 7.6
+          # Ini kunci agar Gradle 9 milik GitHub tidak ikut campur
           mkdir -p platforms/android/gradle/wrapper
           cat <<EOF > platforms/android/gradle/wrapper/gradle-wrapper.properties
           distributionBase=GRADLE_USER_HOME
@@ -38,12 +38,16 @@ jobs:
           zipStorePath=wrapper/dists
           EOF
           
-          # 3. Jalankan build langsung (Cordova akan mengurus segalanya)
-          # Kita tidak menggunakan chmod lagi agar tidak error "No such file"
-          export JAVA_HOME=$JAVA_HOME_11_X64
-          cordova build android --debug --device --no-telemetry
+          # 3. Beri izin eksekusi pada wrapper yang baru dibuat
+          chmod +x platforms/android/gradlew
           
-          # 4. Ambil hasil APK dengan pencarian dinamis
+          # 4. Jalankan build menggunakan Java 17
+          # Kita panggil gradlew secara langsung agar lebih stabil
+          export JAVA_HOME=$JAVA_HOME_17_X64
+          cd platforms/android && ./gradlew assembleDebug
+          
+          # 5. Ambil hasil APK
+          cd ../..
           mkdir -p output
           find platforms/android/app/build/outputs/apk/debug/ -name "*.apk" -exec cp {} output/resizer-android13.apk \;
 
