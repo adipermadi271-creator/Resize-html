@@ -14,12 +14,6 @@ jobs:
           distribution: 'temurin'
           java-version: '11'
 
-      # PERBAIKAN: Kita pasang Gradle versi 7.6 secara manual
-      - name: Setup Gradle
-        uses: gradle/gradle-build-action@v2
-        with:
-          gradle-version: 7.6
-
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
@@ -28,25 +22,31 @@ jobs:
       - name: Install Cordova
         run: npm install -g cordova
 
-      - name: Create Cordova Project
+      - name: Prepare and Build Cordova
         run: |
-          cordova create build_dir com.kamu.resizer ResizerApp
-          cp -r www/* build_dir/www/
-          cp config.xml build_dir/config.xml
-          cd build_dir
-          # Kita gunakan versi android yang lebih stabil untuk Gradle 7
-          cordova platform add android@10.1.2 
-
-      - name: Build APK
-        run: |
-          cd build_dir
-          # Kita tambahkan flag agar tidak mendownload gradle otomatis yang salah
+          # 1. Buat proyek di folder sementara
+          cordova create my_app com.kamu.resizer ResizerApp
+          
+          # 2. Hapus isi folder 'www' bawaan cordova, ganti dengan milikmu
+          rm -rf my_app/www/*
+          cp -r www/* my_app/www/
+          
+          # 3. Copy config.xml ke dalam folder proyek
+          cp config.xml my_app/config.xml
+          
+          # 4. Masuk ke folder proyek dan tambah platform
+          cd my_app
+          cordova platform add android@10.1.2
+          
+          # 5. Jalankan Build
           cordova build android --debug --device
-        env:
-          JAVA_HOME: ${{ env.JAVA_HOME_11_X64 }}
+          
+          # 6. Pindahkan hasil APK ke folder luar agar mudah di-upload
+          mkdir -p ../output
+          cp platforms/android/app/build/outputs/apk/debug/app-debug.apk ../output/resizer-pro.apk
 
       - name: Upload APK Result
         uses: actions/upload-artifact@v4
         with:
           name: Aplikasi-Resizer-HTML
-          path: build_dir/platforms/android/app/build/outputs/apk/debug/app-debug.apk
+          path: output/resizer-pro.apk
