@@ -24,29 +24,29 @@ jobs:
 
       - name: Prepare and Build Cordova
         run: |
-          # 1. Buat proyek di folder sementara
+          # 1. Buat proyek
           cordova create my_app com.kamu.resizer ResizerApp
           
-          # 2. Hapus isi folder 'www' bawaan cordova, ganti dengan milikmu
+          # 2. Sinkronkan file kamu
           rm -rf my_app/www/*
           cp -r www/* my_app/www/
-          
-          # 3. Copy config.xml ke dalam folder proyek
           cp config.xml my_app/config.xml
           
-          # 4. Masuk ke folder proyek dan tambah platform
           cd my_app
-          cordova platform add android@10.1.2
+          # 3. GUNAKAN VERSI INI UNTUK ANDROID 13
+          cordova platform add android@12.0.0
+          
+          # 4. Tambahkan izin akses media agar bisa buka galeri di Android 13
+          cordova plugin add cordova-plugin-chooser
           
           # 5. Jalankan Build
           cordova build android --debug --device
           
-          # 6. Pindahkan hasil APK ke folder luar agar mudah di-upload
           mkdir -p ../output
-          cp platforms/android/app/build/outputs/apk/debug/app-debug.apk ../output/resizer-pro.apk
+          cp platforms/android/app/build/outputs/apk/debug/app-debug.apk ../output/resizer-android13.apk
 
       - name: Upload APK Result
         uses: actions/upload-artifact@v4
         with:
-          name: Aplikasi-Resizer-HTML
-          path: output/resizer-pro.apk
+          name: Aplikasi-Resizer-Android13
+          path: output/resizer-android13.apk
